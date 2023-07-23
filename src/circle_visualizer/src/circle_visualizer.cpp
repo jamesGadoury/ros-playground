@@ -8,26 +8,43 @@
 #include <random>
 #include <functional>
 #include <thread>
+#include <string>
 
 using namespace std;
 using std::placeholders::_1;
 
-sf::Color convert(const std_msgs::msg::ColorRGBA &color) {
+namespace sf {
+
+Color convert(const std_msgs::msg::ColorRGBA &color) {
     return sf::Color(color.r, color.g, color.b, color.a);
 }
 
-sf::CircleShape convert(const shape_interfaces::msg::RenderableCircle &circle) {
-    sf::CircleShape shape(static_cast<float>(circle.radius));
+CircleShape convert(const shape_interfaces::msg::RenderableCircle &circle) {
+    CircleShape shape(circle.radius);
     shape.setFillColor(convert(circle.color));
-    shape.setPosition(static_cast<float>(circle.position.x), static_cast<float>(circle.position.y));
+    shape.setPosition(circle.position.x, circle.position.y);
     return shape;
+}
+
+}
+
+struct Circle {
+    string id;
+    sf::CircleShape shape;
+};
+
+Circle convert(const shape_interfaces::msg::RenderableCircle &circle) {
+    return Circle {
+        circle.id,
+        sf::convert(circle)
+    };
 }
 
 static const string NODE_NAME = "CircleVisualizer";
 class CircleVisualizer : public rclcpp::Node {
 public:
     CircleVisualizer() : rclcpp::Node(NODE_NAME), window(sf::VideoMode(1000.f, 1000.f), NODE_NAME) {
-        circle_subscription = create_subscription<shape_interfaces::msg::RenderableCircle>("renderable_circles", 10, bind(&CircleVisualizer::node_callback, this, _1));
+        circle_subscription = create_subscription<shape_interfaces::msg::RenderableCircle>("renderable_circles", 10, bind(&CircleVisualizer::circle_callback, this, _1));
         render_timer = create_wall_timer(chrono::milliseconds(200), bind(&CircleVisualizer::render_callback, this));
     } 
 
@@ -36,11 +53,11 @@ private:
     rclcpp::TimerBase::SharedPtr render_timer;
 
     sf::RenderWindow window;
-    vector<shape_interfaces::msg::RenderableCircle> circles;
+    unordered_map<string, Circle> circles;
 
-    void node_callback(const shape_interfaces::msg::RenderableCircle &msg) {
-        RCLCPP_INFO_STREAM(get_logger(), "Heard with position: " << msg.position.x << "," << msg.position.y);
-        circles.push_back(msg);
+    void circle_callback(const shape_interfaces::msg::RenderableCircle &msg) {
+        RCLCPP_INFO_STREAM(get_logger(), "Heard id: " << msg.id << ", position: (" << msg.position.x << "," << msg.position.y << ").");
+        circles[msg.id] = convert(msg);
     }
 
     void render_callback() {
@@ -62,9 +79,9 @@ private:
 
         window.clear(sf::Color::White);
 
-        for (const auto &circle : circles) {
+        for (const auto &[id, circle] : circles) {
             RCLCPP_DEBUG(get_logger(), "Processed circle.");
-            window.draw(convert(circle));
+            window.draw(circle.shape);
         }
 
         window.display();
