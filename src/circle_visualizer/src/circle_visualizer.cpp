@@ -27,6 +27,16 @@ CircleShape convert(const shape_interfaces::msg::RenderableCircle &circle) {
 
 }
 
+std::ostream &operator<<(std::ostream &os, const shape_interfaces::msg::RenderableCircle &circle) { 
+    return os
+        << "RenderableCircle: (" << std::endl
+        << "id: " << circle.id << std::endl
+        << "radius: " << circle.radius << std::endl
+        << "position: (" << circle.position.x << ", " << circle.position.y << ")" << std::endl
+        << "color: (" << circle.color.r << ", " << circle.color.g << ", " << circle.color.b << ", " << circle.color.a << ")" << std::endl
+        << ")";
+}
+
 struct Circle {
     std::string id;
     sf::CircleShape shape;
@@ -68,7 +78,7 @@ private:
     std::unordered_map<std::string, Circle> circles;
 
     void circle_callback(const shape_interfaces::msg::RenderableCircle &msg) {
-        RCLCPP_INFO_STREAM(get_logger(), "Heard id: " << msg.id << ", position: (" << msg.position.x << "," << msg.position.y << ").");
+        RCLCPP_INFO_STREAM(get_logger(), "circle_callback: Recieved " << msg);
         circles[msg.id] = convert(msg);
     }
 
