@@ -9,14 +9,14 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(SFML COMPONENTS graphics REQUIRED)
-find_package(node_interfaces REQUIRED)
+find_package(shape_interfaces REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
 add_executable(circle_visualizer src/circle_visualizer.cpp)
-ament_target_dependencies(circle_visualizer rclcpp node_interfaces)
+ament_target_dependencies(circle_visualizer rclcpp shape_interfaces)
 target_link_libraries(circle_visualizer sfml-graphics)
 
 target_include_directories(circle_visualizer PUBLIC
