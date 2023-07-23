@@ -35,51 +35,57 @@ VisualNode convert(const node_interfaces::msg::Node &msg) {
     };
 }
 
+static const string NODE_NAME = "NodeVisualizer";
 class NodeVisualizer : public rclcpp::Node {
 public:
-    NodeVisualizer() : rclcpp::Node("NodeVisualizer") {
+    NodeVisualizer() : rclcpp::Node(NODE_NAME), window(sf::VideoMode(1000.f, 1000.f), NODE_NAME) {
         node_subscription = create_subscription<node_interfaces::msg::Node>("node_topic", 10, bind(&NodeVisualizer::node_callback, this, _1));
-    
-    sf::RenderWindow window(
-        sf::VideoMode(1000.f, 1000.f),
-        "SFML FML."
-    );
+        render_timer = create_wall_timer(chrono::milliseconds(200), bind(&NodeVisualizer::render_callback, this));
+    } 
 
-    while (window.isOpen()) {
-        auto start = chrono::steady_clock::now();
+private:
+    rclcpp::Subscription<node_interfaces::msg::Node>::SharedPtr node_subscription;
+    rclcpp::TimerBase::SharedPtr render_timer;
+
+    sf::RenderWindow window;
+    vector<VisualNode> nodes;
+
+    void node_callback(const node_interfaces::msg::Node &msg) {
+        RCLCPP_INFO_STREAM(get_logger(), "Heard with position: " << msg.position.x << "," << msg.position.y);
+        nodes.push_back(convert(msg));
+    }
+
+    void render_callback() {
+        if (!window.isOpen()) {
+            RCLCPP_INFO_STREAM(get_logger(), "Window closed... skipping render.");
+            return;
+        }
+
+        const auto start = chrono::steady_clock::now();
         sf::Event event;
 
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
+                RCLCPP_INFO_STREAM(get_logger(), "Closing window.");
                 window.close();
+                return;
+            }
         }
 
         window.clear(sf::Color::White);
 
         for (const auto &node : nodes) {
+            RCLCPP_DEBUG(get_logger(), "Processed node.");
             window.draw(convert(node));
         }
 
         window.display();
-
-        static constexpr auto MINIMUM_UPDATE_DUR = chrono::milliseconds(200);
-        if (
-            auto update_dur = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start);
-            update_dur < MINIMUM_UPDATE_DUR
-        ) {
-            this_thread::sleep_for(MINIMUM_UPDATE_DUR - update_dur);
-        }
-    }
-
-    }
-
-    vector<VisualNode> nodes;
-private:
-    rclcpp::Subscription<node_interfaces::msg::Node>::SharedPtr node_subscription;
-
-    void node_callback(const node_interfaces::msg::Node &msg) {
-        RCLCPP_INFO_STREAM(get_logger(), "Heard with position: " << msg.position.x << "," << msg.position.y);
-        nodes.push_back(convert(msg));
+        RCLCPP_DEBUG_STREAM(
+            get_logger(),
+            "Render loop took: " <<
+            chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start).count() <<
+            " ms."
+        );
     }
 };
 
