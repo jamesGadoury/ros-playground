@@ -1,3 +1,6 @@
+#include "rclcpp/rclcpp.hpp"
+#include <node_interfaces/msg/node.hpp>
+
 #include <SFML/Graphics.hpp>
 
 #include <chrono>
@@ -7,34 +10,40 @@
 #include <thread>
 
 using namespace std;
+using std::placeholders::_1;
 
-struct Node {
+struct VisualNode {
     sf::Color color = sf::Color::Blue;
     float x = 0.f;
     float y = 0.f;
     float radius = 0.f;
 };
 
-sf::CircleShape convert(const Node &node) {
+sf::CircleShape convert(const VisualNode &node) {
     sf::CircleShape shape(node.radius);
     shape.setFillColor(node.color);
     shape.setPosition(node.x, node.y);
     return shape;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        cout << "wtf" << endl;
-        return -1;
-    }
+VisualNode convert(const node_interfaces::msg::Node &msg) {
+    return {
+        sf::Color(msg.color.r, msg.color.g, msg.color.b, msg.color.a),
+        static_cast<float>(msg.position.x),
+        static_cast<float>(msg.position.y),
+        static_cast<float>(msg.radius)
+    };
+}
 
-    const float width = atof(argv[1]);
-    const float height = atof(argv[2]);
-
+class NodeVisualizer : public rclcpp::Node {
+public:
+    NodeVisualizer() : rclcpp::Node("NodeVisualizer") {
+        node_subscription = create_subscription<node_interfaces::msg::Node>("node_topic", 10, bind(&NodeVisualizer::node_callback, this, _1));
+    
     sf::RenderWindow window(
-        sf::VideoMode(width, height),
+        sf::VideoMode(1000.f, 1000.f),
         "SFML FML."
-     );
+    );
 
     while (window.isOpen()) {
         auto start = chrono::steady_clock::now();
@@ -46,30 +55,9 @@ int main(int argc, char *argv[]) {
         }
 
         window.clear(sf::Color::White);
-        static constexpr float BUFFER = 100.f;
-        static constexpr float RADIUS = 100.f;
-        static constexpr float OFFSET = BUFFER + RADIUS;
 
-        for (float x = 0.f; x < window.getSize().x - RADIUS; x += OFFSET) {
-            for (float y = 0.0f; y < window.getSize().y - RADIUS; y += OFFSET) {
-                window.draw(convert(Node{
-                    invoke([]() {
-                        static mt19937 gen(42);
-                        static uniform_real_distribution<float> dis(0.f, 1.f);
-                        const float probability = dis(gen);
-                        if (probability < 0.1f) {
-                            return sf::Color::Red;
-                        } else if (probability < 0.6f) {
-                            return sf::Color::Green;
-                        } else {
-                            return sf::Color::Blue;
-                        }
-                    }),
-                    x,
-                    y,
-                    RADIUS
-                }));
-            }
+        for (const auto &node : nodes) {
+            window.draw(convert(node));
         }
 
         window.display();
@@ -82,6 +70,23 @@ int main(int argc, char *argv[]) {
             this_thread::sleep_for(MINIMUM_UPDATE_DUR - update_dur);
         }
     }
+
+    }
+
+    vector<VisualNode> nodes;
+private:
+    rclcpp::Subscription<node_interfaces::msg::Node>::SharedPtr node_subscription;
+
+    void node_callback(const node_interfaces::msg::Node &msg) {
+        RCLCPP_INFO_STREAM(get_logger(), "Heard with position: " << msg.position.x << "," << msg.position.y);
+        nodes.push_back(convert(msg));
+    }
+};
+
+int main(int argc, char *argv[]) {
+    rclcpp::init(argc, argv);
+    rclcpp::spin(make_shared<NodeVisualizer>());
+    rclcpp::shutdown();
 
     return 0;
 }
