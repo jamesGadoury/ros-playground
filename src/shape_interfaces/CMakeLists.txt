@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(circle_visualizer)
+project(shape_interfaces)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -9,26 +9,12 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(SFML COMPONENTS graphics REQUIRED)
-find_package(shape_interfaces REQUIRED)
-
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-
-add_executable(circle_visualizer src/circle_visualizer.cpp)
-ament_target_dependencies(circle_visualizer rclcpp shape_interfaces)
-target_link_libraries(circle_visualizer sfml-graphics)
-
-target_include_directories(circle_visualizer PUBLIC
-#   ${SFML_INCLUDE_DIR}
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(circle_visualizer PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-
-install(TARGETS circle_visualizer
-  DESTINATION lib/${PROJECT_NAME})
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -41,5 +27,15 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+set(MESSAGE_SOURCES
+  "msg/Circle.msg"
+  "msg/RenderableCircle.msg"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${MESSAGE_SOURCES}
+  DEPENDENCIES std_msgs geometry_msgs
+)
 
 ament_package()
