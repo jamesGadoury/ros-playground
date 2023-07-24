@@ -45,6 +45,8 @@ public:
             "GridSearchVisualizer"
         );
         render_timer = create_wall_timer(std::chrono::milliseconds(100), bind(&GridSearchVisualizer::render_callback, this));
+
+        initial_render();
     }
 private:
     rclcpp::Subscription<grid_search_interfaces::msg::GridSearchEvent>::SharedPtr search_event_subscription;
@@ -55,6 +57,28 @@ private:
 
     void search_event_callback(const grid_search_interfaces::msg::GridSearchEvent &event) {
         event_queue.push(event);
+    }
+
+    void initial_render() {
+        window->clear(sf::Color::White);
+
+        //! @todo use the problem to set these bounds...
+        const int space_x_per_node = window->getSize().x / 20;
+        const int space_y_per_node = window->getSize().y / 20;
+        const int radius = space_x_per_node / 2;
+
+        for (int i = 0; i < 20; ++i) {
+            for (int j = 0; j < 20; ++j) {
+                sf::CircleShape shape;
+                shape.setRadius(radius);
+                shape.setOutlineColor(sf::Color::Blue);
+                shape.setOutlineThickness(1.f);
+                shape.setPosition(i * space_x_per_node, j * space_y_per_node);
+                window->draw(shape);
+            }
+        }
+
+        window->display();
     }
 
     void render_callback() {
@@ -74,13 +98,36 @@ private:
             }
         }
 
-        window->clear(sf::Color::White);
+        if (event_queue.empty()) {
+            RCLCPP_INFO_STREAM(get_logger(), "Event queue is empty... skipping render.");
+            return;
+        }
 
-        // for (const auto &[id, circle] : circles) {
-        //     RCLCPP_DEBUG(get_logger(), "Processed circle.");
-        //     window->draw(circle.shape);
-        // }
+        const auto search_event = event_queue.front();
+        event_queue.pop();
 
+        //! @todo use the problem to set these bounds...
+        const int space_x_per_node = window->getSize().x / 20;
+        const int space_y_per_node = window->getSize().y / 20;
+        const int radius = space_x_per_node / 2;
+
+        const GridEntry node_position = to_grid_entry(search_event.node.state);
+        sf::CircleShape circle;
+        circle.setPosition(node_position.col * space_x_per_node, node_position.row * space_y_per_node);
+        circle.setRadius(radius);
+
+        if (search_event.event_name == "POP") {
+            circle.setFillColor(sf::Color::Blue);
+        } else if (search_event.event_name == "EXPAND") {
+            circle.setFillColor(sf::Color::Cyan);
+        } else if (search_event.event_name == "COMPLETE") {
+            circle.setFillColor(sf::Color::Green);
+        } else {
+            RCLCPP_ERROR_STREAM(get_logger(), "Unexpected event name: " << search_event.event_name);
+            return;
+        }
+
+        window->draw(circle);
         window->display();
         RCLCPP_DEBUG_STREAM(
             get_logger(),
