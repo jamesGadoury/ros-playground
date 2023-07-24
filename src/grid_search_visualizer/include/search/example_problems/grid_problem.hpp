@@ -107,7 +107,6 @@ public:
         return 1;
     }
 
-private:
     GridProblemConfig config;
 };
 

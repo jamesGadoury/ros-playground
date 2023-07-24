@@ -44,7 +44,7 @@ public:
             ),
             "GridSearchVisualizer"
         );
-        render_timer = create_wall_timer(std::chrono::milliseconds(100), bind(&GridSearchVisualizer::render_callback, this));
+        render_timer = create_wall_timer(std::chrono::milliseconds(50), bind(&GridSearchVisualizer::render_callback, this));
 
         initial_render();
     }
@@ -62,17 +62,25 @@ private:
     void initial_render() {
         window->clear(sf::Color::White);
 
-        //! @todo use the problem to set these bounds...
-        const int space_x_per_node = window->getSize().x / 20;
-        const int space_y_per_node = window->getSize().y / 20;
-        const int radius = space_x_per_node / 2;
+        //! @todo Need to reverse render for y since grid is y up
+        const size_t space_x_per_node = window->getSize().x / problem.config.cols;
+        const size_t space_y_per_node = window->getSize().y / problem.config.rows;
+        const size_t radius = space_x_per_node / 2;
 
-        for (int i = 0; i < 20; ++i) {
-            for (int j = 0; j < 20; ++j) {
+        for (size_t i = 0; i < problem.config.cols; ++i) {
+            for (size_t j = 0; j < problem.config.rows; ++j) {
                 sf::CircleShape shape;
                 shape.setRadius(radius);
-                shape.setOutlineColor(sf::Color::Blue);
-                shape.setOutlineThickness(1.f);
+
+                if (i == problem.config.initial.col && j == problem.config.initial.row) {
+                    shape.setOutlineColor(sf::Color::Blue);
+                } else if (i == problem.config.goal.col && j == problem.config.goal.row) {
+                    shape.setOutlineColor(sf::Color::Green);
+                } else {
+                    shape.setOutlineColor(sf::Color::Black);
+                }
+
+                shape.setOutlineThickness(3.f);
                 shape.setPosition(i * space_x_per_node, j * space_y_per_node);
                 window->draw(shape);
             }
@@ -106,10 +114,10 @@ private:
         const auto search_event = event_queue.front();
         event_queue.pop();
 
-        //! @todo use the problem to set these bounds...
-        const int space_x_per_node = window->getSize().x / 20;
-        const int space_y_per_node = window->getSize().y / 20;
-        const int radius = space_x_per_node / 2;
+        //! @todo Need to reverse render for y since grid is y up
+        const size_t space_x_per_node = window->getSize().x / problem.config.cols;
+        const size_t space_y_per_node = window->getSize().y / problem.config.rows;
+        const size_t radius = space_x_per_node / 2;
 
         const GridEntry node_position = to_grid_entry(search_event.node.state);
         sf::CircleShape circle;
