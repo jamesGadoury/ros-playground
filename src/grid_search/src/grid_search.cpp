@@ -35,10 +35,10 @@ public:
     GridSearchExample() : rclcpp::Node("GridSearchExample") {
         search_event_publisher = create_publisher<grid_search_interfaces::msg::GridSearchEvent>("grid_search_event", 10);
         const GridProblem problem({
-            1000,
-            1000,
+            20,
+            20,
             GridEntry { 0, 0},
-            GridEntry { 839, 943 }});
+            GridEntry { 17, 18 }});
 
         this_thread::sleep_for(chrono::seconds(3));
 
@@ -67,9 +67,9 @@ public:
             search_event_publisher->publish(event);
         });
 
-        RCLCPP_INFO(get_logger(), "Happened");
+        RCLCPP_INFO(get_logger(), "Starting search.");
         a_star_search(problem, HEURISTIC, dispatcher.get());
-        RCLCPP_INFO(get_logger(), "Done");
+        RCLCPP_INFO(get_logger(), "Finished search.");
     }
 private:
     rclcpp::Publisher<grid_search_interfaces::msg::GridSearchEvent>::SharedPtr search_event_publisher;
