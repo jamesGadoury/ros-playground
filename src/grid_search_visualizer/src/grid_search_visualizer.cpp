@@ -36,7 +36,7 @@ grid_search_interfaces::msg::GridNode convert(const ProblemNode<GridProblem> &no
 class GridSearchVisualizer : public rclcpp::Node {
 public:
     GridSearchVisualizer() : rclcpp::Node("GridSearchVisualizer"), problem({20, 20, GridEntry {0, 0}, GridEntry {17, 18}}) {
-        search_event_subscription = create_subscription<grid_search_interfaces::msg::GridSearchEvent>("grid_search_event", 10, bind(&GridSearchVisualizer::search_event_callback, this, _1));
+        search_event_subscription = create_subscription<grid_search_interfaces::msg::GridSearchEvent>("grid_search_event", 10000, bind(&GridSearchVisualizer::search_event_callback, this, _1));
         window = std::make_unique<sf::RenderWindow>(
             sf::VideoMode(
                 2000,
@@ -110,6 +110,8 @@ private:
             RCLCPP_INFO_STREAM(get_logger(), "Event queue is empty... skipping render.");
             return;
         }
+
+        RCLCPP_DEBUG_STREAM(get_logger(), "Size of event_queue: " << event_queue.size());
 
         const auto search_event = event_queue.front();
         event_queue.pop();

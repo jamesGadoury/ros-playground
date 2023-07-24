@@ -33,7 +33,7 @@ grid_search_interfaces::msg::GridNode convert(const ProblemNode<GridProblem> &no
 class GridSearchExample : public rclcpp::Node {
 public:
     GridSearchExample() : rclcpp::Node("GridSearchExample") {
-        search_event_publisher = create_publisher<grid_search_interfaces::msg::GridSearchEvent>("grid_search_event", 10);
+        search_event_publisher = create_publisher<grid_search_interfaces::msg::GridSearchEvent>("grid_search_event", 10000);
         const GridProblem problem({
             20,
             20,
@@ -48,6 +48,7 @@ public:
             event.event_name = "POP";
             event.node = convert(node);
 
+            ++sent_events;
             search_event_publisher->publish(event);
         });
         
@@ -56,6 +57,7 @@ public:
             event.event_name = "EXPAND";
             event.node = convert(node);
 
+            ++sent_events;
             search_event_publisher->publish(event);
         });
 
@@ -64,15 +66,17 @@ public:
             event.event_name = "COMPLETE";
             event.node = convert(node);
 
+            ++sent_events;
             search_event_publisher->publish(event);
         });
 
         RCLCPP_INFO(get_logger(), "Starting search.");
         a_star_search(problem, HEURISTIC, dispatcher.get());
-        RCLCPP_INFO(get_logger(), "Finished search.");
+        RCLCPP_INFO_STREAM(get_logger(), "Finished search. Sent " << sent_events << " events.");
     }
 private:
     rclcpp::Publisher<grid_search_interfaces::msg::GridSearchEvent>::SharedPtr search_event_publisher;
+    int sent_events = 0;
 };
 
 int main(int argc, char *argv[])
