@@ -29,6 +29,14 @@ static const string WORLD_FRAME = "world";
 //     return out;
 // }
 
+Eigen::Vector3d transform_point(const Eigen::Affine3d &transform, const Eigen::Vector3d &point)
+{
+    Eigen::Vector4d homogeneous_point;
+    homogeneous_point.head<3>() = point;
+    homogeneous_point[3] = 1;
+    return (transform.affine() * homogeneous_point).head<3>();
+}
+
 class RelativeBodyPoseNode : public rclcpp::Node
 {
 public:
@@ -44,7 +52,7 @@ public:
 
 private:
     tf2::Stamped<Eigen::Affine3d> body_pose;
-    const Eigen::Vector3d body_relative_point = Eigen::Vector3d(1.0, 1.0, 0.0);
+    const Eigen::Vector3d body_relative_point = Eigen::Vector3d(0.5, 0.5, -0.2);
 
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_publisher;
     rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr point_publisher;
@@ -55,9 +63,7 @@ private:
         pose_publisher->publish(tf2::toMsg(body_pose));
         point_publisher->publish(tf2::toMsg([this]() {
             tf2::Stamped<Eigen::Vector3d> point;
-            Eigen::Vector4d homogeneous_point;
-            homogeneous_point.head<3>() = body_relative_point;
-            point.setData((body_pose.affine() * homogeneous_point).head<3>());
+            point.setData(transform_point(body_pose, body_relative_point));
             point.frame_id_ = WORLD_FRAME;
             return point;
         }()));
