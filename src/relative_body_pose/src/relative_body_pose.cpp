@@ -55,7 +55,9 @@ public:
         point_publisher = create_publisher<geometry_msgs::msg::PointStamped>("body_point", 10);
         update_timer = create_wall_timer(500ms, std::bind(&RelativeBodyPoseNode::update, this));
 
-        makeButton({0, 0.5, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
+        makeButton("RotateByXAxis", {0, 0, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
+        makeButton("RotateByYAxis", {0, 0.5, 2}, std::bind(&RelativeBodyPoseNode::rotateByYButtonClick, this, _1));
+        makeButton("RotateByZAxis", {0, 1, 2}, std::bind(&RelativeBodyPoseNode::rotateByZButtonClick, this, _1));
         interactive_marker_server->applyChanges();
     }
 
@@ -94,18 +96,35 @@ private:
         }
     }
 
+    void rotateByYButtonClick(const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback)
+    {
+        if (feedback->event_type == feedback->BUTTON_CLICK)
+        {
+            RCLCPP_INFO(get_logger(), "Rotate By Y Axis Button Clicked...");
+            body_pose.rotate(Eigen::AngleAxisd(tf2Radians(15), Eigen::Vector3d::UnitY()));
+        }
+    }
+
+    void rotateByZButtonClick(const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback)
+    {
+        if (feedback->event_type == feedback->BUTTON_CLICK)
+        {
+            RCLCPP_INFO(get_logger(), "Rotate By Z Axis Button Clicked...");
+            body_pose.rotate(Eigen::AngleAxisd(tf2Radians(15), Eigen::Vector3d::UnitZ()));
+        }
+    }
     //! @todo should I just use tf2 vectors or eigen...?
-    void makeButton(const tf2::Vector3 &position, const interactive_markers::InteractiveMarkerServer::FeedbackCallback &callback)
+    void makeButton(const std::string &name, const tf2::Vector3 &position, const interactive_markers::InteractiveMarkerServer::FeedbackCallback &callback)
     {
         visualization_msgs::msg::InteractiveMarker button;
         button.header.frame_id = WORLD_FRAME;
         button.pose.position.x = position.getX();
         button.pose.position.y = position.getY();
         button.pose.position.z = position.getZ();
-        button.scale = 1;
+        button.scale = 0.5;
 
-        button.name = "button";
-        button.description = "Button\n(Left Click)";
+        button.name = name;
+        button.description = name;
 
         visualization_msgs::msg::InteractiveMarkerControl control;
 
