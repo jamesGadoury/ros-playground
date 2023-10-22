@@ -49,15 +49,17 @@ public:
     RelativeBodyPoseNode() : Node("relative_body_pose")
     {
         body_pose.setData(Eigen::Affine3d::Identity());
+        body_pose.translate(Eigen::Vector3d(0.5, 0.5, 0.5));
+
         body_pose.frame_id_ = WORLD_FRAME;
 
         pose_publisher = create_publisher<geometry_msgs::msg::PoseStamped>("body_pose", 10);
         point_publisher = create_publisher<geometry_msgs::msg::PointStamped>("body_point", 10);
         update_timer = create_wall_timer(500ms, std::bind(&RelativeBodyPoseNode::update, this));
 
-        makeButton("RotateByXAxis", {0, 0, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
-        makeButton("RotateByYAxis", {0, 0.5, 2}, std::bind(&RelativeBodyPoseNode::rotateByYButtonClick, this, _1));
-        makeButton("RotateByZAxis", {0, 1, 2}, std::bind(&RelativeBodyPoseNode::rotateByZButtonClick, this, _1));
+        makeButton("RotateByXAxis", {0, -1.2, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
+        makeButton("RotateByYAxis", {0, 0, 2}, std::bind(&RelativeBodyPoseNode::rotateByYButtonClick, this, _1));
+        makeButton("RotateByZAxis", {0, 1.2, 2}, std::bind(&RelativeBodyPoseNode::rotateByZButtonClick, this, _1));
         interactive_marker_server->applyChanges();
     }
 
@@ -136,9 +138,9 @@ private:
             visualization_msgs::msg::Marker marker;
 
             marker.type = visualization_msgs::msg::Marker::CUBE;
-            marker.scale.x = button.scale * 0.45;
-            marker.scale.y = button.scale * 0.45;
-            marker.scale.z = button.scale * 0.45;
+            marker.scale.x = button.scale * 0.5;
+            marker.scale.y = button.scale * 0.5;
+            marker.scale.z = button.scale * 0.5;
             marker.color.r = 0.5;
             marker.color.g = 0.5;
             marker.color.b = 0.5;
