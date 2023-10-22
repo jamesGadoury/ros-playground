@@ -13,6 +13,7 @@ find_package(rclcpp REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
+find_package(interactive_markers REQUIRED)
 
 add_executable(relative_body_pose src/relative_body_pose.cpp)
 target_include_directories(relative_body_pose PUBLIC
@@ -23,6 +24,7 @@ ament_target_dependencies(
   relative_body_pose
   "rclcpp"
   "visualization_msgs"
+  "interactive_markers"
   "geometry_msgs"
   "tf2_eigen"
 )

@@ -7,11 +7,17 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/LinearMath/Scalar.h>
 #include <tf2_eigen/tf2_eigen.hpp>
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "interactive_markers/interactive_marker_server.hpp"
+#include "interactive_markers/menu_handler.hpp"
 
-using namespace std;
+using std::placeholders::_1;
 using namespace std::chrono_literals;
 
-static const string WORLD_FRAME = "world";
+static const std::string WORLD_FRAME = "world";
 
 // Eigen::Vector3d toVec3(const Eigen::Vector4d &in)
 // {
@@ -47,7 +53,10 @@ public:
 
         pose_publisher = create_publisher<geometry_msgs::msg::PoseStamped>("body_pose", 10);
         point_publisher = create_publisher<geometry_msgs::msg::PointStamped>("body_point", 10);
-        update_timer = create_wall_timer(500ms, bind(&RelativeBodyPoseNode::update, this));
+        update_timer = create_wall_timer(500ms, std::bind(&RelativeBodyPoseNode::update, this));
+
+        makeButton({0, 0.5, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
+        interactive_marker_server->applyChanges();
     }
 
 private:
@@ -58,22 +67,78 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr point_publisher;
     rclcpp::TimerBase::SharedPtr update_timer;
 
+    std::unique_ptr<interactive_markers::InteractiveMarkerServer> interactive_marker_server =
+        std::make_unique<interactive_markers::InteractiveMarkerServer>("interactive_markers", get_node_base_interface(),
+                                                                       get_node_clock_interface(),
+                                                                       get_node_logging_interface(),
+                                                                       get_node_topics_interface(),
+                                                                       get_node_services_interface());
+
     void update()
     {
         pose_publisher->publish(tf2::toMsg(body_pose));
-        point_publisher->publish(tf2::toMsg([this]() {
+        point_publisher->publish(tf2::toMsg([this]()
+                                            {
             tf2::Stamped<Eigen::Vector3d> point;
             point.setData(transform_point(body_pose, body_relative_point));
             point.frame_id_ = WORLD_FRAME;
-            return point;
-        }()));
-        
+            return point; }()));
+    }
+
+    void rotateByXButtonClick(const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback)
+    {
+        if (feedback->event_type == feedback->BUTTON_CLICK)
+        {
+            RCLCPP_INFO(get_logger(), "Rotate By X Axis Button Clicked...");
+            body_pose.rotate(Eigen::AngleAxisd(tf2Radians(15), Eigen::Vector3d::UnitX()));
+        }
+    }
+
+    //! @todo should I just use tf2 vectors or eigen...?
+    void makeButton(const tf2::Vector3 &position, const interactive_markers::InteractiveMarkerServer::FeedbackCallback &callback)
+    {
+        visualization_msgs::msg::InteractiveMarker button;
+        button.header.frame_id = WORLD_FRAME;
+        button.pose.position.x = position.getX();
+        button.pose.position.y = position.getY();
+        button.pose.position.z = position.getZ();
+        button.scale = 1;
+
+        button.name = "button";
+        button.description = "Button\n(Left Click)";
+
+        visualization_msgs::msg::InteractiveMarkerControl control;
+
+        control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::BUTTON;
+        control.name = "button_control";
+
+        visualization_msgs::msg::Marker marker = [&button]()
+        {
+            visualization_msgs::msg::Marker marker;
+
+            marker.type = visualization_msgs::msg::Marker::CUBE;
+            marker.scale.x = button.scale * 0.45;
+            marker.scale.y = button.scale * 0.45;
+            marker.scale.z = button.scale * 0.45;
+            marker.color.r = 0.5;
+            marker.color.g = 0.5;
+            marker.color.b = 0.5;
+            marker.color.a = 1.0;
+
+            return marker;
+        }();
+        control.markers.push_back(marker);
+        control.always_visible = true;
+        button.controls.push_back(control);
+
+        interactive_marker_server->insert(button);
+        interactive_marker_server->setCallback(button.name, callback);
     }
 };
 
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(make_shared<RelativeBodyPoseNode>());
+    rclcpp::spin(std::make_shared<RelativeBodyPoseNode>());
     rclcpp::shutdown();
 }
