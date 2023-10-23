@@ -19,22 +19,6 @@ using namespace std::chrono_literals;
 
 static const std::string WORLD_FRAME = "world";
 
-// Eigen::Vector3d toVec3(const Eigen::Vector4d &in)
-// {
-//     Eigen::Vector4d out;
-//     out.head<3>() = in;
-//     out[3] = 1;
-//     return out;
-// }
-
-// Eigen::Vector4d toVec4(const Eigen::Vector3d &in)
-// {
-//     Eigen::Vector4d out;
-//     out.head<3>() = in;
-//     out[3] = 1;
-//     return out;
-// }
-
 Eigen::Vector3d transform_point(const Eigen::Affine3d &transform, const Eigen::Vector3d &point)
 {
     Eigen::Vector4d homogeneous_point;
