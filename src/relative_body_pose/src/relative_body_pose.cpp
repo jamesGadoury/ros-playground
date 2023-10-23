@@ -55,7 +55,7 @@ public:
 
         pose_publisher = create_publisher<geometry_msgs::msg::PoseStamped>("body_pose", 10);
         point_publisher = create_publisher<geometry_msgs::msg::PointStamped>("body_point", 10);
-        update_timer = create_wall_timer(500ms, std::bind(&RelativeBodyPoseNode::update, this));
+        update_timer = create_wall_timer(100ms, std::bind(&RelativeBodyPoseNode::update, this));
 
         makeButton("RotateByXAxis", {0, -1.2, 2}, std::bind(&RelativeBodyPoseNode::rotateByXButtonClick, this, _1));
         makeButton("RotateByYAxis", {0, 0, 2}, std::bind(&RelativeBodyPoseNode::rotateByYButtonClick, this, _1));
