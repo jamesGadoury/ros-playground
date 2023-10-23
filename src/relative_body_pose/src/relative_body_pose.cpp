@@ -12,7 +12,6 @@
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "interactive_markers/interactive_marker_server.hpp"
-#include "interactive_markers/menu_handler.hpp"
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
