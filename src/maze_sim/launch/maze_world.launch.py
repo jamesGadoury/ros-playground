@@ -10,12 +10,14 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
+    launch_file_dir = os.path.join(
+        get_package_share_directory('turtlebot3_gazebo'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     x_pose = LaunchConfiguration('x_pose', default='6.0')
     y_pose = LaunchConfiguration('y_pose', default='-1.0')
+    yaw_pose = LaunchConfiguration('yaw_pose', default='3.141592653589793')
 
     world = os.path.join(
         get_package_share_directory('maze_sim'),
@@ -45,11 +47,13 @@ def generate_launch_description():
 
     spawn_turtlebot_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(launch_file_dir, 'spawn_turtlebot3.launch.py')
+            os.path.join(os.path.join(
+                get_package_share_directory('maze_sim'), 'launch'), 'better_spawn_turtlebot3.launch.py')
         ),
         launch_arguments={
             'x_pose': x_pose,
-            'y_pose': y_pose
+            'y_pose': y_pose,
+            'yaw_pose': yaw_pose
         }.items()
     )
 
