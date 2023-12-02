@@ -10,7 +10,7 @@
         <include>
         <name>bot</name>
         <uri>src/maze_sim/worlds/turtlebot3_burger/model.sdf</uri>
-        <pose>3 -0.5 0.070 0 0 0</pose>
+        <pose>3 -0.5 0 0 0 3.14</pose>
         <plugin
             filename="libignition-gazebo-diff-drive-system.so"
             name="ignition::gazebo::systems::DiffDrive">
