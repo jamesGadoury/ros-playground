@@ -20,6 +20,16 @@ public:
         data_out_ = std::ofstream("bot_data_out.csv");
         gen_ = std::mt19937(42);
         last_update_ = std::chrono::steady_clock::now();
+        data_out_ << "timestamp_ns,angle_min,angle_max,angle_increment,time_increment,scan_time,range_min,range_max,";
+        for (int i = 0; i < 360; ++i)
+        {
+            data_out_ << "range_" << i << ",";
+        }
+        for (int i = 0; i < 360; ++i)
+        {
+            data_out_ << "intensity_" << i << ",";
+        }
+        data_out_ << "linear_velocity_x,rotational_velocity_z,\n";
     }
 
 private:
@@ -32,7 +42,6 @@ private:
         }
 
         data_out_ << msg.header.stamp.nanosec << "," 
-                        << msg.header.frame_id << ","
                         << msg.angle_min << ","
                         << msg.angle_max << ","
                         << msg.angle_increment << ","
