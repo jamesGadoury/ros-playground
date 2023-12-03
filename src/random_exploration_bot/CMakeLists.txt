@@ -10,7 +10,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-
+find_package(sensor_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -25,7 +25,7 @@ if(BUILD_TESTING)
 endif()
 
 add_executable(${PROJECT_NAME} src/random_exploration_bot.cpp)
-ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs)
+ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs sensor_msgs)
 
 install(TARGETS
   ${PROJECT_NAME}

@@ -103,12 +103,13 @@
         </material>
       </visual>
 
-      <sensor name="hls_lfcd_lds" type="gpu_ray">
+      <sensor name="gpu_lidar" type="gpu_lidar">
         <topic>lidar</topic>
         <always_on>1</always_on>
-        <visualize>0</visualize>
+        <visualize>true</visualize>
         <pose>-0.032 0 0.171 0 0 0</pose>
-        <update_rate>1800</update_rate>
+        <!-- <update_rate>1800</update_rate> -->
+        <update_rate>10</update_rate>
         <ray>
           <scan>
             <horizontal>
