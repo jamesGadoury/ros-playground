@@ -1,6 +1,7 @@
 #include <memory>
 #include <random>
 #include <fstream>
+#include <sstream>
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -16,10 +17,14 @@ public:
     {
         publisher_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         subscription_ = create_subscription<sensor_msgs::msg::LaserScan>("lidar", 10, std::bind(&RandomExploration::laser_scan_callback, this, _1));
-        //! @todo configurable name param?
-        data_out_ = std::ofstream("bot_data_out.csv");
-        gen_ = std::mt19937(42);
         last_update_ = std::chrono::steady_clock::now();
+        data_out_ = std::ofstream([this]() {
+            std::stringstream ss;
+            ss << "random_exploration_data_" << last_update_.time_since_epoch().count() << ".csv";
+            return ss.str();
+        }());
+        gen_ = std::mt19937(42);
+
         data_out_ << "timestamp_ns,angle_min,angle_max,angle_increment,time_increment,scan_time,range_min,range_max,";
         for (int i = 0; i < 360; ++i)
         {
