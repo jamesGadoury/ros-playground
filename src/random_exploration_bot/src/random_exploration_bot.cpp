@@ -69,7 +69,7 @@ private:
         message.linear.x = std::uniform_real_distribution<>(0.0, 0.22)(gen_);
         message.angular.z = std::uniform_real_distribution<>(-2.84, 2.84)(gen_);
         publisher_->publish(message);
-        data_out_ << message.linear.x << "," << message.angular.z << ",";
+        data_out_ << message.linear.x << "," << message.angular.z;
 
         data_out_ << "\n";
         auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
