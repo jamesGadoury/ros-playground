@@ -14,42 +14,18 @@ class RandomExploration : public rclcpp::Node
 public:
     RandomExploration() : Node("random_exploration")
     {
-        timer_ = create_wall_timer(3s, std::bind(&RandomExploration::timer_callback, this));
         publisher_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         subscription_ = create_subscription<sensor_msgs::msg::LaserScan>("lidar", 10, std::bind(&RandomExploration::laser_scan_callback, this, _1));
         //! @todo configurable name param?
-        laser_scan_out_ = std::ofstream("laser_scan.csv");
+        data_out_ = std::ofstream("laser_scan.csv");
         gen_ = std::mt19937(42);
     }
 
 private:
-    void timer_callback()
-    {
-        std::uniform_int_distribution<> distribution(1, 3);
-        auto message = geometry_msgs::msg::Twist();
-
-        const int choice = distribution(gen_);
-        assert(choice >= 1 && choice <= 3);
-
-        if (choice == 1)
-        {
-            message.linear.x = 0.22;
-        }
-        else if (choice == 2)
-        {
-            message.angular.z = 0.1;
-        }
-        else if (choice == 3)
-        {
-            message.angular.z = -0.1;
-        }
-        publisher_->publish(message);
-    }
-
     void laser_scan_callback(const sensor_msgs::msg::LaserScan &msg)
     {
         auto start = std::chrono::steady_clock::now();
-        laser_scan_out_ << msg.header.stamp.nanosec << "," 
+        data_out_ << msg.header.stamp.nanosec << "," 
                         << msg.header.frame_id << ","
                         << msg.angle_min << ","
                         << msg.angle_max << ","
@@ -61,24 +37,28 @@ private:
 
         for (const auto &range : msg.ranges)
         {
-            laser_scan_out_ << range << ",";
+            data_out_ << range << ",";
         }
 
         for (const auto &intensity : msg.intensities)
         {
-            laser_scan_out_ << intensity << ",";
+            data_out_ << intensity << ",";
         }
 
-        laser_scan_out_ << "\n";
-        auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-start).count();
+        auto message = geometry_msgs::msg::Twist();
+        message.linear.x = std::uniform_real_distribution<>(-0.22, 0.22)(gen_);
+        message.angular.z = std::uniform_real_distribution<>(-2.84, 2.84)(gen_);
+        publisher_->publish(message);
+        data_out_ << message.linear.x << "," << message.angular.z << ",";
 
+        data_out_ << "\n";
+        auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-start).count();
         RCLCPP_INFO(get_logger(), "I took %li ms to process laser scan...", dur_ms);
     }
 
-    rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
-    std::ofstream laser_scan_out_;
+    std::ofstream data_out_;
 
     std::mt19937 gen_;
 };

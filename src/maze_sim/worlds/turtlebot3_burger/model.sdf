@@ -108,8 +108,7 @@
         <always_on>1</always_on>
         <visualize>true</visualize>
         <pose>-0.032 0 0.171 0 0 0</pose>
-        <!-- <update_rate>1800</update_rate> -->
-        <update_rate>10</update_rate>
+        <update_rate>1800</update_rate>
         <ray>
           <scan>
             <horizontal>
