@@ -18,11 +18,11 @@ public:
         publisher_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         subscription_ = create_subscription<sensor_msgs::msg::LaserScan>("lidar", 10, std::bind(&RandomExploration::laser_scan_callback, this, _1));
         last_update_ = std::chrono::steady_clock::now();
-        data_out_ = std::ofstream([this]() {
+        data_out_ = std::ofstream([this]()
+                                  {
             std::stringstream ss;
-            ss << "random_exploration_data_" << last_update_.time_since_epoch().count() << ".csv";
-            return ss.str();
-        }());
+            ss << "random_exploration_data_" << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << ".csv";
+            return ss.str(); }());
         gen_ = std::mt19937(42);
 
         data_out_ << "timestamp_ns,angle_min,angle_max,angle_increment,time_increment,scan_time,range_min,range_max,";
@@ -46,14 +46,14 @@ private:
             return;
         }
 
-        data_out_ << msg.header.stamp.nanosec << "," 
-                        << msg.angle_min << ","
-                        << msg.angle_max << ","
-                        << msg.angle_increment << ","
-                        << msg.time_increment << ","
-                        << msg.scan_time << ","
-                        << msg.range_min << ","
-                        << msg.range_max << ",";
+        data_out_ << msg.header.stamp.nanosec << ","
+                  << msg.angle_min << ","
+                  << msg.angle_max << ","
+                  << msg.angle_increment << ","
+                  << msg.time_increment << ","
+                  << msg.scan_time << ","
+                  << msg.range_min << ","
+                  << msg.range_max << ",";
 
         for (const auto &range : msg.ranges)
         {
@@ -72,7 +72,7 @@ private:
         data_out_ << message.linear.x << "," << message.angular.z << ",";
 
         data_out_ << "\n";
-        auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-start).count();
+        auto dur_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
         RCLCPP_INFO(get_logger(), "I took %li ms to process laser scan...", dur_ms);
 
         last_update_ = std::chrono::steady_clock::now();
@@ -86,7 +86,7 @@ private:
     std::mt19937 gen_;
 };
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<RandomExploration>());
