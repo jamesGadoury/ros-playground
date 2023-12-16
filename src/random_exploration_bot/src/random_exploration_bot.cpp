@@ -41,13 +41,13 @@ private:
     void laser_scan_callback(const sensor_msgs::msg::LaserScan &msg)
     {
         auto start = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::nanoseconds>(start - last_update_) < update_interval_)
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(start - last_update_) < std::chrono::duration_cast<std::chrono::milliseconds>(action_update_interval_))
         {
             return;
         }
 
         data_out_ << msg.header.stamp.nanosec << ","
-                  << update_interval_.count() << ","
+                  << action_update_interval_.count() << ","
                   << msg.angle_min << ","
                   << msg.angle_max << ","
                   << msg.angle_increment << ","
@@ -67,8 +67,8 @@ private:
         }
 
         auto message = geometry_msgs::msg::Twist();
-        message.linear.x = std::uniform_real_distribution<>(0.0, 0.22)(gen_);
-        message.angular.z = std::uniform_real_distribution<>(-2.84, 2.84)(gen_);
+        message.linear.x = std::uniform_real_distribution<>(min_lin_vel_x_, max_lin_vel_x_)(gen_);
+        message.angular.z = std::uniform_real_distribution<>(min_ang_vel_z_, max_ang_vel_z_)(gen_);
         publisher_->publish(message);
         data_out_ << message.linear.x << "," << message.angular.z;
 
@@ -79,11 +79,21 @@ private:
         last_update_ = std::chrono::steady_clock::now();
     }
 
+    static constexpr double TURTLEBOT_3_BURGER_MAX_LINEAR_VELOCITY_X = 0.22;
+    static constexpr double TURTLEBOT_3_BURGER_MIN_ANGULAR_VELOCITY_Z = -2.84;
+    static constexpr double TURTLEBOT_3_BURGER_MAX_ANGULAR_VELOCITY_Z = 2.84;
+
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
     std::chrono::time_point<std::chrono::steady_clock> last_update_;
     std::ofstream data_out_;
-    std::chrono::nanoseconds update_interval_ = 1s;
+
+    //! @todo update these so they are params
+    double min_lin_vel_x_ = 0.1;
+    double max_lin_vel_x_ = TURTLEBOT_3_BURGER_MAX_LINEAR_VELOCITY_X;
+    double min_ang_vel_z_ = TURTLEBOT_3_BURGER_MIN_ANGULAR_VELOCITY_Z;
+    double max_ang_vel_z_ = TURTLEBOT_3_BURGER_MAX_ANGULAR_VELOCITY_Z;
+    std::chrono::nanoseconds action_update_interval_ = 1s;
 
     std::mt19937 gen_;
 };
