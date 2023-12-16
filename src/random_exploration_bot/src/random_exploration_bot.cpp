@@ -25,7 +25,7 @@ public:
             return ss.str(); }());
         gen_ = std::mt19937(42);
 
-        data_out_ << "timestamp_ns,angle_min,angle_max,angle_increment,time_increment,scan_time,range_min,range_max,";
+        data_out_ << "timestamp_ns,update_interval_ns,angle_min,angle_max,angle_increment,time_increment,scan_time,range_min,range_max";
         for (int i = 0; i < 360; ++i)
         {
             data_out_ << "range_" << i << ",";
@@ -41,12 +41,13 @@ private:
     void laser_scan_callback(const sensor_msgs::msg::LaserScan &msg)
     {
         auto start = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(start - last_update_) < 1s)
+        if (std::chrono::duration_cast<std::chrono::nanoseconds>(start - last_update_) < update_interval_)
         {
             return;
         }
 
         data_out_ << msg.header.stamp.nanosec << ","
+                  << update_interval_.count() << ","
                   << msg.angle_min << ","
                   << msg.angle_max << ","
                   << msg.angle_increment << ","
@@ -82,6 +83,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
     std::chrono::time_point<std::chrono::steady_clock> last_update_;
     std::ofstream data_out_;
+    std::chrono::nanoseconds update_interval_ = 1s;
 
     std::mt19937 gen_;
 };
