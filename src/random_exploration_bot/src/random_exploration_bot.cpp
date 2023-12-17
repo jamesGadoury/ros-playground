@@ -67,8 +67,20 @@ private:
         }
 
         auto message = geometry_msgs::msg::Twist();
-        message.linear.x = std::uniform_real_distribution<>(min_lin_vel_x_, max_lin_vel_x_)(gen_);
-        message.angular.z = std::uniform_real_distribution<>(min_ang_vel_z_, max_ang_vel_z_)(gen_);
+
+        //! @todo Enumerate action space (go forward / turn)
+        const int choice = std::uniform_int_distribution<>(0, 1)(gen_);
+        assert(choice == 0 || choice == 1);
+        if (choice == 0)
+        {
+            // message.linear.x = std::uniform_real_distribution<>(min_lin_vel_x_, max_lin_vel_x_)(gen_);
+            message.linear.x = TURTLEBOT_3_BURGER_MAX_LINEAR_VELOCITY_X;
+        }
+        else
+        {
+            message.angular.z = std::uniform_real_distribution<>(min_ang_vel_z_, max_ang_vel_z_)(gen_);
+        }
+
         publisher_->publish(message);
         data_out_ << message.linear.x << "," << message.angular.z;
 
